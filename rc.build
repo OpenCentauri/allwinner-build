@@ -18,7 +18,7 @@ make modules -j8 && \
 make modules_install INSTALL_MOD_PATH=../out && \
 mv ../out/lib/modules/* ../out/ && \
 rm -rf ../out/lib && \
-mkbootimg \
+../mkbootimg \
   --board 'r528-e100' \
   --kernel arch/arm/boot/zImage \
   --ramdisk ../ramdisk.img \
