@@ -1,0 +1,66 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      kernel_config:
+        description: KERNEL_CONFIG passed to rc.build
+        required: false
+        default: linux-oc-config
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # Override via workflow_dispatch input or repository variable "KERNEL_CONFIG" (Actions → Variables)
+      KERNEL_CONFIG: ${{ github.event.inputs.kernel_config || vars.KERNEL_CONFIG || 'linux-oc-config' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Install dependencies
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            bc bison flex \
+            libssl-dev libelf-dev \
+            android-tools-mkbootimg \
+            build-essential
+
+      - name: Build
+        run: |
+          set -euxo pipefail
+          echo "KERNEL_CONFIG=$KERNEL_CONFIG"
+          ./rc.build
+          ls -la out
+
+      - name: Package modules
+        run: |
+          set -euxo pipefail
+          test -d out/5.4.61-ab1175
+          tar -czf out/kernel-modules.tar.gz -C out 5.4.61-ab1175
+          ls -la out/kernel-modules.tar.gz
+
+      - name: Upload kernel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel
+          path: out/kernel
+          if-no-files-found: error
+
+      - name: Upload modules artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: modules-5.4.61-ab1175
+          path: out/kernel-modules.tar.gz
+          if-no-files-found: error
