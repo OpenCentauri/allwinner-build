@@ -1,0 +1,24 @@
+#!/bin/bash
+
+here="$(readlink -f $(dirname $0))"
+KERNEL_CONFIG="${KERNEL_CONFIG:-linux-oc-config}"
+
+# Clean-up past artifacts
+rm -f "$here"/out/*
+
+# Source toolchain
+. "$here"/toolchain/environment-arm-openwrt-linux-gnueabi
+
+# Copy config in and build kernel zImage
+cd "$here"/linux
+#make distclean
+! [[ -f .config ]] && cp -f ../conf/"${KERNEL_CONFIG}" .config
+make zImage -j8 && \
+mkbootimg \
+  --board 'r528-e100' \
+  --kernel arch/arm/boot/zImage \
+  --ramdisk ../ramdisk.img \
+  --base 0x40000000 \
+  --kernel_offset 0x00008000 \
+  --ramdisk_offset 0x01000000 \
+  -o ../out/kernel

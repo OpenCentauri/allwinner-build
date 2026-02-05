@@ -1,0 +1,6 @@
+[submodule "toolchain"]
+	path = toolchain
+	url = ../arm-openwrt-linux-gnueabi-gcc.git
+[submodule "linux"]
+	path = linux
+	url = ../oc-linux.git
